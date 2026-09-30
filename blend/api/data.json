@@ -1,0 +1,88 @@
+{
+  "users": [
+    {
+      "id": "ab4a1f6c-9abf-4c3d-8cd4-c9feb0127b06",
+      "name": "pra",
+      "email": "pra@gmail.com",
+      "salt": "de30280a227d8c4db26c85d3ea61ca41",
+      "passwordHash": "c94c6070edeb1d320fd33804a577a01bccd585657e21896068cf38c5c0e550b01f64127bb1bec8b47b98c7c3aa2da00cfa1af014f9ed4e0951e83322099bcf65",
+      "createdAt": "2026-09-29T22:43:20.964Z"
+    }
+  ],
+  "posts": [
+    {
+      "id": "seed-sunday-rituals",
+      "authorId": "seed-june",
+      "authorName": "June Harper",
+      "title": "The gentle art of a Sunday that asks for nothing",
+      "excerpt": "Lately, I have been practicing a different kind of Sunday. One with nowhere to be and absolutely nothing to prove.",
+      "content": "Lately, I have been practicing a different kind of Sunday. One with nowhere to be and absolutely nothing to prove.\n\nThe coffee takes its sweet time. The flowers get fresh water. I leave the laundry in its basket until I feel like folding it, and the world keeps spinning just fine.\n\nSomewhere between the second cup and the afternoon light, I remember that rest is not a reward for getting everything done. It is simply one of the things that makes us human.",
+      "coverImage": "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1100&q=85",
+      "category": "Little moments",
+      "createdAt": "2026-09-24T10:00:00.000Z",
+      "featured": true
+    },
+    {
+      "id": "seed-blue-hour",
+      "authorId": "seed-margot",
+      "authorName": "Margot Ellis",
+      "title": "A tiny love letter to the blue hour",
+      "excerpt": "That in-between bit of the evening when the sky turns the color of a secret. I think it might be my favorite time.",
+      "content": "That in-between bit of the evening when the sky turns the color of a secret. I think it might be my favorite time.\n\nThe neighbors walk their dogs a little slower. A few windows glow gold. I take the long way home even when my hands are full of groceries, because the light is doing that thing again.\n\nHere is your reminder to look up on the way home. The sky has been saving something lovely for you.",
+      "coverImage": "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1000&q=85",
+      "category": "Little moments",
+      "createdAt": "2026-09-21T16:00:00.000Z"
+    },
+    {
+      "id": "seed-thrifted-ceramics",
+      "authorId": "seed-clara",
+      "authorName": "Clara Rose",
+      "title": "The things we keep because they feel like us",
+      "excerpt": "A chipped blue bowl, a very lopsided vase, and the small joy of making a home feel a little more like your own.",
+      "content": "A chipped blue bowl, a very lopsided vase, and the small joy of making a home feel a little more like your own.\n\nI found the bowl in a charity shop on a rainy Tuesday. It was a little too expensive for something that is not quite a bowl anymore, but I could not leave it there. It lives on my kitchen shelf now and holds the lemons.\n\nI think a home becomes ours through these little accidents. The things we keep for no good reason, except that they make us smile when we pass.",
+      "coverImage": "https://images.unsplash.com/photo-1490312278390-ab64016e0aa9?auto=format&fit=crop&w=1000&q=85",
+      "category": "At home",
+      "createdAt": "2026-09-18T11:30:00.000Z"
+    },
+    {
+      "id": "seed-getting-dressed",
+      "authorId": "seed-wren",
+      "authorName": "Wren Parker",
+      "title": "Getting dressed for the person I am today",
+      "excerpt": "Less getting it right. More putting on the cardigan that feels like being gently looked after.",
+      "content": "Less getting it right. More putting on the cardigan that feels like being gently looked after.\n\nI used to save my favorite things for a more special day. The good earrings, the softest sweater, the lipstick I like best. Turns out Tuesday is a very good day for all of that.\n\nNow I get dressed for the person I am today, instead of the imaginary person I might be someday. It is a small thing, and it is changing a lot.",
+      "coverImage": "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1000&q=85",
+      "category": "Style notes",
+      "createdAt": "2026-09-14T08:45:00.000Z"
+    },
+    {
+      "id": "seed-small-brave",
+      "authorId": "seed-june",
+      "authorName": "June Harper",
+      "title": "On doing one small brave thing",
+      "excerpt": "It does not have to be a grand gesture. Sometimes bravery looks like sending the message and making the tea.",
+      "content": "It does not have to be a grand gesture. Sometimes bravery looks like sending the message and making the tea.\n\nI made the phone call I had been putting off for three weeks. Then I sat down on the kitchen floor and let the kettle do the hard part.\n\nIf nobody has said it lately: it counts even if it was small, even if your hands shook, even if it took you a while. I am proud of you. I mean it.",
+      "coverImage": "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1000&q=85",
+      "category": "Good things",
+      "createdAt": "2026-09-10T12:10:00.000Z"
+    },
+    {
+      "id": "1ddf031c-0ca4-4488-89d9-ef1817efb0e9",
+      "title": "dark show",
+      "content": "its was a dark night.",
+      "category": "Little moments",
+      "coverImage": "",
+      "authorId": "ab4a1f6c-9abf-4c3d-8cd4-c9feb0127b06",
+      "createdAt": "2026-09-29T22:44:19.634Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": "96fc1d4f-70ce-400d-b31a-f2de7b5472b5",
+      "postId": "seed-sunday-rituals",
+      "authorId": "ab4a1f6c-9abf-4c3d-8cd4-c9feb0127b06",
+      "content": "wow",
+      "createdAt": "2026-09-29T22:44:32.543Z"
+    }
+  ]
+}

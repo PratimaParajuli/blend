@@ -1,0 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;500;600;700&family=Press+Start+2P&display=swap');
+
+:root {
+  --paper: #e8efd9;
+  --ink: #304335;
+  --muted: #6e806d;
+  --line: #bfd0b0;
+  --rose: #e97883;
+  --rose-dark: #a7495b;
+  --sage: #cee1c0;
+  --sans: 'Nunito Sans', 'Segoe UI', sans-serif;
+  --serif: 'Pixelify Sans', 'Trebuchet MS', sans-serif;
+  --hand: 'Pixelify Sans', 'Trebuchet MS', sans-serif;
+  --pixel: 'Press Start 2P', monospace;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { min-width: 0; scroll-behavior: smooth; }
+body { min-width: 0; min-height: 100vh; margin: 0; }
+body, button, input, textarea, select { font-family: var(--sans); }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; }
+::selection { color: var(--ink); background: #f5b9a9; }
