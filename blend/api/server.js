@@ -90,14 +90,20 @@ function postAuthor(post) {
   return user ? publicUser(user) : { id: post.authorId, name: post.authorName || 'A friend' }
 }
 
-function publicPost(post) {
+function publicPost(post, user) {
   const content = post.content || ''
+  const { likes = [], savedBy = [], ...details } = post
+  const postLikes = Array.isArray(likes) ? likes : []
+  const savedUsers = Array.isArray(savedBy) ? savedBy : []
   return {
-    ...post,
+    ...details,
     author: postAuthor(post),
     excerpt: post.excerpt || content.slice(0, 150),
     readingTime: `${Math.max(1, Math.ceil(content.trim().split(/\s+/).length / 200))} min read`,
     commentCount: database.comments.filter((comment) => comment.postId === post.id).length,
+    likeCount: postLikes.length,
+    likedByMe: Boolean(user && postLikes.includes(user.id)),
+    savedByMe: Boolean(user && savedUsers.includes(user.id)),
   }
 }
 
@@ -195,8 +201,21 @@ async function handle(request, response) {
   }
 
   if (request.method === 'GET' && route === '/api/posts') {
-    const posts = [...database.posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(publicPost)
+    const posts = [...database.posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((post) => publicPost(post, user))
     return send(response, 200, { posts })
+  }
+
+  const postInteractionRoute = route.match(/^\/api\/posts\/([^/]+)\/(likes|save)$/)
+  if (postInteractionRoute && ['PUT', 'DELETE'].includes(request.method)) {
+    if (!user) return send(response, 401, { error: `Sign in to ${postInteractionRoute[2] === 'likes' ? 'like' : 'save'} a story.` })
+    const post = database.posts.find((item) => item.id === postInteractionRoute[1])
+    if (!post) return send(response, 404, { error: 'Story not found.' })
+    const field = postInteractionRoute[2] === 'likes' ? 'likes' : 'savedBy'
+    post[field] = Array.isArray(post[field]) ? post[field] : []
+    if (request.method === 'PUT' && !post[field].includes(user.id)) post[field].push(user.id)
+    if (request.method === 'DELETE') post[field] = post[field].filter((id) => id !== user.id)
+    persist()
+    return send(response, 200, { post: publicPost(post, user) })
   }
 
   const commentsRoute = route.match(/^\/api\/posts\/([^/]+)\/comments$/)
@@ -234,11 +253,18 @@ async function handle(request, response) {
     return send(response, 200, { comment: publicComment(comment, user) })
   }
 
-  if (commentRoute && request.method === 'DELETE') {
-    if (!user) return send(response, 401, { error: 'Sign in to delete your comment.' })
+  if (commentRoute && ['PUT', 'DELETE'].includes(request.method)) {
+    if (!user) return send(response, 401, { error: `Sign in to ${request.method === 'PUT' ? 'edit' : 'delete'} your comment.` })
     const comment = database.comments.find((item) => item.id === commentRoute[1])
     if (!comment) return send(response, 404, { error: 'Comment not found.' })
-    if (comment.authorId !== user.id) return send(response, 403, { error: 'You can only delete your own comment.' })
+    if (comment.authorId !== user.id) return send(response, 403, { error: `You can only ${request.method === 'PUT' ? 'edit' : 'delete'} your own comment.` })
+    if (request.method === 'PUT') {
+      const content = cleanText((await readJson(request)).content, 1200)
+      if (content.length < 2) return send(response, 400, { error: 'Your comment needs at least 2 characters.' })
+      Object.assign(comment, { content, updatedAt: new Date().toISOString() })
+      persist()
+      return send(response, 200, { comment: publicComment(comment, user) })
+    }
     for (const reply of database.comments) {
       if (reply.parentId === comment.id) reply.parentId = comment.parentId || null
     }
@@ -250,10 +276,10 @@ async function handle(request, response) {
   if (request.method === 'POST' && route === '/api/posts') {
     if (!user) return send(response, 401, { error: 'Sign in to share a story.' })
     const fields = validatePost(await readJson(request))
-    const post = { id: randomUUID(), ...fields, authorId: user.id, createdAt: new Date().toISOString() }
+    const post = { id: randomUUID(), ...fields, authorId: user.id, likes: [], savedBy: [], createdAt: new Date().toISOString() }
     database.posts.push(post)
     persist()
-    return send(response, 201, { post: publicPost(post) })
+    return send(response, 201, { post: publicPost(post, user) })
   }
 
   const postRoute = route.match(/^\/api\/posts\/([^/]+)$/)
@@ -270,7 +296,7 @@ async function handle(request, response) {
     }
     Object.assign(post, validatePost(await readJson(request)), { updatedAt: new Date().toISOString() })
     persist()
-    return send(response, 200, { post: publicPost(post) })
+    return send(response, 200, { post: publicPost(post, user) })
   }
 
   return send(response, 404, { error: 'That little path does not exist.' })
