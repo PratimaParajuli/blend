@@ -143,11 +143,24 @@ main { width: min(1320px, calc(100% - 80px)); margin: 0 auto; }
 .comment-form input { min-width: 0; flex: 1; padding: 10px 11px; border: 1px solid #e9ded6; outline: 0; font-size: 10px; }
 .comment-form .button { min-height: 37px; padding: 0 13px; }
 .comment-list { display: flex; flex-direction: column; gap: 15px; margin-top: 18px; }
-.comment { display: flex; gap: 10px; }
-.comment > div { flex: 1; padding-bottom: 13px; border-bottom: 1px solid #eee5df; }
+.comment-thread { min-width: 0; }
+.comment { display: flex; align-items: flex-start; gap: 10px; }
+.comment > div { min-width: 0; flex: 1; padding-bottom: 13px; border-bottom: 1px solid #eee5df; }
 .comment strong { color: #5c514a; font-size: 10px; }
+.comment-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.comment-meta small { flex: 0 0 auto; margin: 0; }
 .comment p { margin-top: 4px; color: #766d66; font-size: 10px; line-height: 1.6; overflow-wrap: anywhere; }
 .comment small { display: block; margin-top: 5px; color: #aa9e94; font-size: 9px; }
+.comment-actions { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 8px; }
+.comment-action { padding: 0; border: 0; color: #8c8179; background: none; font-size: 9px; }
+.comment-action:hover, .comment-action.liked { color: var(--rose-dark); }
+.comment-action:disabled { cursor: wait; opacity: .6; }
+.comment-action.comment-delete { color: #a64e4a; }
+.comment-replies { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; padding-left: 12px; border-left: 1px solid #eadbd3; }
+.comment-reply-form { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.comment-reply-form input { min-width: 100px; flex: 1; padding: 8px 9px; border: 1px solid #e9ded6; outline: 0; font-size: 10px; }
+.comment-reply-form .button { min-height: 32px; padding: 0 10px; }
+.comment-reply-form .text-button { font-size: 9px; }
 .empty-comments { padding: 15px 0; color: #9a8e84; font-family: var(--hand); font-size: 17px; text-align: center; }
 .toast { position: fixed; z-index: 30; right: 24px; bottom: 24px; max-width: min(390px, calc(100vw - 48px)); padding: 14px 19px; color: white; background: #495b4d; box-shadow: 0 8px 30px #24362930; font-size: 11px; animation: settle-in .2s both; }
 @keyframes settle-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

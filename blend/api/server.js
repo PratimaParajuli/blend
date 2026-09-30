@@ -101,6 +101,17 @@ function publicPost(post) {
   }
 }
 
+function publicComment(comment, user) {
+  const { likes = [], ...details } = comment
+  return {
+    ...details,
+    parentId: comment.parentId || null,
+    author: publicUser(database.users.find((item) => item.id === comment.authorId)) || { name: 'A friend' },
+    likeCount: likes.length,
+    likedByMe: Boolean(user && likes.includes(user.id)),
+  }
+}
+
 function currentUser(request) {
   const cookie = request.headers.cookie || ''
   const match = cookie.match(/(?:^|;\s*)blend_session=([^;]+)/)
@@ -189,10 +200,12 @@ async function handle(request, response) {
   }
 
   const commentsRoute = route.match(/^\/api\/posts\/([^/]+)\/comments$/)
+  const commentLikesRoute = route.match(/^\/api\/comments\/([^/]+)\/likes$/)
+  const commentRoute = route.match(/^\/api\/comments\/([^/]+)$/)
   if (commentsRoute && request.method === 'GET') {
     const post = database.posts.find((item) => item.id === commentsRoute[1])
     if (!post) return send(response, 404, { error: 'Story not found.' })
-    const comments = database.comments.filter((item) => item.postId === post.id).map((comment) => ({ ...comment, author: publicUser(database.users.find((item) => item.id === comment.authorId)) || { name: 'A friend' } }))
+    const comments = database.comments.filter((item) => item.postId === post.id).map((comment) => publicComment(comment, user))
     return send(response, 200, { comments })
   }
 
@@ -201,11 +214,37 @@ async function handle(request, response) {
     if (!database.posts.some((item) => item.id === commentsRoute[1])) return send(response, 404, { error: 'Story not found.' })
     const payload = await readJson(request)
     const content = cleanText(payload.content, 1200)
+    const parentId = cleanText(payload.parentId, 100) || null
     if (content.length < 2) return send(response, 400, { error: 'Your note needs at least 2 characters.' })
-    const comment = { id: randomUUID(), postId: commentsRoute[1], authorId: user.id, content, createdAt: new Date().toISOString() }
+    if (parentId && !database.comments.some((item) => item.id === parentId && item.postId === commentsRoute[1])) return send(response, 404, { error: 'The comment you are replying to was not found.' })
+    const comment = { id: randomUUID(), postId: commentsRoute[1], parentId, authorId: user.id, content, likes: [], createdAt: new Date().toISOString() }
     database.comments.push(comment)
     persist()
-    return send(response, 201, { comment: { ...comment, author: publicUser(user) } })
+    return send(response, 201, { comment: publicComment(comment, user) })
+  }
+
+  if (commentLikesRoute && ['PUT', 'DELETE'].includes(request.method)) {
+    if (!user) return send(response, 401, { error: 'Sign in to like a comment.' })
+    const comment = database.comments.find((item) => item.id === commentLikesRoute[1])
+    if (!comment) return send(response, 404, { error: 'Comment not found.' })
+    comment.likes = Array.isArray(comment.likes) ? comment.likes : []
+    if (request.method === 'PUT' && !comment.likes.includes(user.id)) comment.likes.push(user.id)
+    if (request.method === 'DELETE') comment.likes = comment.likes.filter((id) => id !== user.id)
+    persist()
+    return send(response, 200, { comment: publicComment(comment, user) })
+  }
+
+  if (commentRoute && request.method === 'DELETE') {
+    if (!user) return send(response, 401, { error: 'Sign in to delete your comment.' })
+    const comment = database.comments.find((item) => item.id === commentRoute[1])
+    if (!comment) return send(response, 404, { error: 'Comment not found.' })
+    if (comment.authorId !== user.id) return send(response, 403, { error: 'You can only delete your own comment.' })
+    for (const reply of database.comments) {
+      if (reply.parentId === comment.id) reply.parentId = comment.parentId || null
+    }
+    database.comments = database.comments.filter((item) => item.id !== comment.id)
+    persist()
+    return send(response, 200, { ok: true })
   }
 
   if (request.method === 'POST' && route === '/api/posts') {

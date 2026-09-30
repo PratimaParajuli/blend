@@ -136,6 +136,8 @@ function PostCard({ post, onOpen }) {
 function StoryModal({ post, user, onClose, onEdit, onDelete, onAuth, onComment, onError }) {
   const [comments, setComments] = useState([])
   const [busy, setBusy] = useState(false)
+  const [commentActionBusy, setCommentActionBusy] = useState(false)
+  const [replyTo, setReplyTo] = useState(null)
   const ownsPost = user?.id && user.id === post.author?.id
 
   useEffect(() => {
@@ -144,24 +146,78 @@ function StoryModal({ post, user, onClose, onEdit, onDelete, onAuth, onComment, 
     return () => { active = false }
   }, [post.id])
 
-  async function submitComment(event) {
+  async function submitComment(event, parentId = null) {
     event.preventDefault()
     if (!user) return onAuth()
     setBusy(true)
     const formElement = event.currentTarget
     const content = new FormData(formElement).get('content')
     try {
-      const response = await fetch(`/api/posts/${post.id}/comments`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content }) })
+      const response = await fetch(`/api/posts/${post.id}/comments`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, parentId }) })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Your comment could not be posted.')
       setComments((current) => [...current, data.comment])
       formElement.reset()
+      setReplyTo(null)
       onComment(post.id)
     } catch (error) {
       onError(error.message)
     } finally {
       setBusy(false)
     }
+  }
+
+  async function toggleCommentLike(comment) {
+    if (!user) return onAuth()
+    setCommentActionBusy(true)
+    try {
+      const response = await fetch(`/api/comments/${comment.id}/likes`, { method: comment.likedByMe ? 'DELETE' : 'PUT' })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'That like could not be saved.')
+      setComments((current) => current.map((item) => item.id === comment.id ? data.comment : item))
+    } catch (error) {
+      onError(error.message)
+    } finally {
+      setCommentActionBusy(false)
+    }
+  }
+
+  async function deleteComment(comment) {
+    if (!window.confirm('Delete your comment? Any replies will stay in the conversation.')) return
+    setCommentActionBusy(true)
+    try {
+      const response = await fetch(`/api/comments/${comment.id}`, { method: 'DELETE' })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Your comment could not be deleted.')
+      setComments((current) => current.filter((item) => item.id !== comment.id).map((item) => item.parentId === comment.id ? { ...item, parentId: comment.parentId || null } : item))
+      onComment(post.id, -1)
+    } catch (error) {
+      onError(error.message)
+    } finally {
+      setCommentActionBusy(false)
+    }
+  }
+
+  function renderComment(comment, depth = 0) {
+    const replies = comments.filter((item) => item.parentId === comment.id)
+    return (
+      <div className="comment-thread" key={comment.id} style={{ marginLeft: depth ? `${Math.min(depth, 4) * 18}px` : undefined }}>
+        <article className="comment">
+          <span className="avatar avatar-small">{comment.author?.name?.[0] || 'J'}</span>
+          <div className="comment-body">
+            <div className="comment-meta"><strong>{comment.author?.name || 'A friend'}</strong><small>{new Date(comment.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</small></div>
+            <p>{comment.content}</p>
+            <div className="comment-actions">
+              <button className={comment.likedByMe ? 'comment-action liked' : 'comment-action'} type="button" aria-pressed={Boolean(comment.likedByMe)} disabled={commentActionBusy} onClick={() => toggleCommentLike(comment)}>{comment.likedByMe ? '♥ Liked' : '♡ Like'}{comment.likeCount > 0 ? ` · ${comment.likeCount}` : ''}</button>
+              <button className="comment-action" type="button" onClick={() => user ? setReplyTo(replyTo === comment.id ? null : comment.id) : onAuth()}>Reply</button>
+              {user?.id === comment.author?.id && <button className="comment-action comment-delete" type="button" disabled={commentActionBusy} onClick={() => deleteComment(comment)}>Delete</button>}
+            </div>
+            {replyTo === comment.id && <form className="comment-reply-form" onSubmit={(event) => submitComment(event, comment.id)}><input name="content" maxLength="1200" minLength="2" placeholder={`Reply to ${comment.author?.name || 'this comment'}…`} aria-label="Write a reply" required /><button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Posting…' : 'Reply'}</button><button className="text-button" type="button" onClick={() => setReplyTo(null)}>Cancel</button></form>}
+          </div>
+        </article>
+        {replies.length > 0 && <div className="comment-replies">{replies.map((reply) => renderComment(reply, depth + 1))}</div>}
+      </div>
+    )
   }
 
   return (
@@ -172,8 +228,8 @@ function StoryModal({ post, user, onClose, onEdit, onDelete, onAuth, onComment, 
       {ownsPost && <div className="story-actions"><button className="button button-soft" type="button" onClick={() => onEdit(post)}>Edit story</button><button className="text-button text-danger" type="button" onClick={() => onDelete(post)}>Delete story</button></div>}
       <section className="comments-section">
         <div className="comments-heading"><h3>Campfire notes <span>({comments.length})</span></h3><span>Say something kind ♡</span></div>
-        <form className="comment-form" onSubmit={submitComment}><span className="avatar avatar-small">{user?.name?.[0] || '?'}</span><input name="content" maxLength="1200" minLength="2" placeholder={user ? 'Add something kind…' : 'Sign in to leave a little note…'} required /><button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Posting…' : 'Post'}</button></form>
-        <div className="comment-list">{comments.map((comment) => <article className="comment" key={comment.id}><span className="avatar avatar-small">{comment.author?.name?.[0] || 'J'}</span><div><strong>{comment.author?.name || 'A friend'}</strong><p>{comment.content}</p><small>{new Date(comment.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</small></div></article>)}{comments.length === 0 && <p className="empty-comments">The first little note is always the sweetest.</p>}</div>
+        <form className="comment-form" onSubmit={(event) => submitComment(event)}><span className="avatar avatar-small">{user?.name?.[0] || '?'}</span><input name="content" maxLength="1200" minLength="2" placeholder={user ? 'Add something kind…' : 'Sign in to leave a little note…'} required /><button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Posting…' : 'Post'}</button></form>
+        <div className="comment-list">{comments.filter((comment) => !comment.parentId).map((comment) => renderComment(comment))}{comments.length === 0 && <p className="empty-comments">The first little note is always the sweetest.</p>}</div>
       </section>
     </Modal>
   )
@@ -273,7 +329,7 @@ function App() {
       {modal === 'auth' && <AuthModal mode={authMode} setMode={setAuthMode} onClose={() => setModal(null)} onSuccess={(loggedInUser) => { setUser(loggedInUser); setModal(null); showNotice(`So glad you're here, ${loggedInUser.name.split(' ')[0]}!`) }} onError={showNotice} />}
       {modal === 'editor' && <PostEditor onClose={() => setModal(null)} onSave={savePost} onError={showNotice} />}
       {modal?.type === 'editor' && <PostEditor post={modal.post} onClose={() => setModal(null)} onSave={savePost} onError={showNotice} />}
-      {modal?.type === 'story' && <StoryModal key={modal.post.id} post={modal.post} user={user} onClose={() => setModal(null)} onEdit={(post) => setModal({ type: 'editor', post })} onDelete={deletePost} onAuth={() => openAuth('login')} onComment={(id) => setPosts((current) => current.map((post) => post.id === id ? { ...post, commentCount: (post.commentCount || 0) + 1 } : post))} onError={showNotice} />}
+      {modal?.type === 'story' && <StoryModal key={modal.post.id} post={modal.post} user={user} onClose={() => setModal(null)} onEdit={(post) => setModal({ type: 'editor', post })} onDelete={deletePost} onAuth={() => openAuth('login')} onComment={(id, change = 1) => setPosts((current) => current.map((post) => post.id === id ? { ...post, commentCount: Math.max(0, (post.commentCount || 0) + change) } : post))} onError={showNotice} />}
     </div>
   )
 }
